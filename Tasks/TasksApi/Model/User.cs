@@ -11,6 +11,8 @@ namespace TasksApi.Model
     {
         public int Id { get; set; }
         [Required]
+        public string Username { get; set; }
+        [Required]
         public string FirstName { get; set; }
         [Required]
         public string LastName { get; set; }
@@ -27,22 +29,20 @@ namespace TasksApi.Model
         {
         }
 
-
-
         public override bool Equals(object obj)
         {
-            return obj is User task &&
-                   Id == task.Id &&
-                   FirstName == task.FirstName &&
-                   LastName == task.LastName &&
-                   PhoneNumber == task.PhoneNumber &&
-                   Email == task.Email &&
-                   Password == task.Password;
+            return obj is User user &&
+                   Id == user.Id &&
+                   Username == user.Username &&
+                   FirstName == user.FirstName &&
+                   LastName == user.LastName &&
+                   PhoneNumber == user.PhoneNumber &&
+                   Email == user.Email;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Id, FirstName, LastName, PhoneNumber, Email, Password);
+            return HashCode.Combine(Id, Username, FirstName, LastName, PhoneNumber, Email);
         }
     }
 }
