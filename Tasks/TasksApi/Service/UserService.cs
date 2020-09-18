@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -10,14 +11,15 @@ using System.Text;
 using TasksApi.Interfaces;
 using TasksApi.Middleware;
 using TasksApi.Model;
+using TasksApi.Model.Auth;
 
 namespace TasksApi.Service
 {
-    public class UserService : ICRUDService
+    public class UserService : IAuthService
     {
         private List<User> users = new List<User>
         {
-            new User { Id = 1, FirstName = "Test", LastName = "User", Email = "test", Password = "test" }
+            new User { Id = 1, Username="test", FirstName = "Test", LastName = "User", Email = "test", Password = "test" }
         };
 
         private readonly AppSettings appSettings;
@@ -29,7 +31,9 @@ namespace TasksApi.Service
 
         public bool Create(object obj)
         {
-            throw new NotImplementedException();
+            int oldSize = users.Count;
+            users.Add((User)obj);
+            return users.Count != oldSize;
         }
 
         public bool Delete(int id)
@@ -39,12 +43,12 @@ namespace TasksApi.Service
 
         public IEnumerable<object> GetAll()
         {
-            throw new NotImplementedException();
+            return users;
         }
 
         public object GetOne(int id)
         {
-            throw new NotImplementedException();
+            return users.FirstOrDefault(user => user.Id == id);
         }
 
         public object Search(string key, string value)
@@ -57,9 +61,9 @@ namespace TasksApi.Service
             throw new NotImplementedException();
         }
 
-        public object Authenticate(User user)
+        public object Authenticate(AuthRequest req)
         {
-            var res = users.SingleOrDefault(x => x.FirstName == user.FirstName && x.Password == user.Password);
+            var user = users.SingleOrDefault(u => u.Username == req.Username && u.Password == req.Password);
             if (user == null)
             {
                 return null;
@@ -71,16 +75,15 @@ namespace TasksApi.Service
         #region ============================== HELPER FUNCTIONS ==============================
         private string GenerateJwtToken(User user)
         {
-            // generate token that is valid for 7 days
             var tokenHandler = new JwtSecurityTokenHandler();
-
-            var key = Encoding.ASCII.GetBytes(appSettings.Secret);
+            var key = Encoding.UTF8.GetBytes(appSettings.Secret);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[] { new Claim("id", user.Id.ToString()) }),
-                Expires = DateTime.UtcNow.AddDays(7),
+                Expires = DateTime.UtcNow.AddDays(appSettings.ExpirationInDays),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
+
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }

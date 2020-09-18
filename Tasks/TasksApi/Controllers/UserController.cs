@@ -3,32 +3,39 @@ using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using TasksApi.Interfaces;
 using TasksApi.Model;
+using TasksApi.Model.Auth;
 using TasksApi.Service;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace TasksApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
+    [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private UserService userService;
+        private IAuthService userService;
+        private readonly ILogger<UserController> logger;
 
-        public UserController(UserService userService)
+        public UserController(ILogger<UserController> logger, IAuthService userService)
         {
+            this.logger = logger;
             this.userService = userService;
         }
 
+        [AllowAnonymous]
         [HttpPost("authenticate")]
-        public IActionResult Authenticate(User user)
+        public IActionResult Authenticate(AuthRequest user)
         {
             var response = userService.Authenticate(user);
             if (response == null)
             {
-                return Unauthorized(new { message = "Unauthorized" });
+                return BadRequest(new { message = "Couldn't authenticate with provided credentials" });
             }
             return Ok(response);
         }
@@ -37,7 +44,6 @@ namespace TasksApi.Controllers
 
 
         // GET: api/<UserControllerr>
-        [Authorize]
         [HttpGet]
         public IActionResult GetAll()
         {
@@ -50,7 +56,6 @@ namespace TasksApi.Controllers
         }
 
         // GET api/<UserControllerr>/5
-        [Authorize]
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
@@ -63,19 +68,9 @@ namespace TasksApi.Controllers
         }
 
         // POST api/<UserControllerr>
-        [Authorize]
         [HttpPost]
-        public IActionResult Post([FromBody] string value)
+        public IActionResult Post([FromBody] User user)
         {
-            var json = JObject.Parse(value);
-            User user = new User()
-            {
-                FirstName = json["first_name"]?.Value<string>() ?? "",
-                LastName = json["last_name"]?.Value<string>() ?? "",
-                Email = json["email"]?.Value<string>() ?? "",
-                PhoneNumber = json["phone_number"]?.Value<string>() ?? ""
-            };
-
             var response = userService.Create(user);
             if (!response)
             {
@@ -85,7 +80,6 @@ namespace TasksApi.Controllers
         }
 
         // PUT api/<UserControllerr>/5
-        [Authorize]
         [HttpPatch("{id}")]
         public IActionResult Patch(int id, [FromBody] string value)
         {
@@ -107,7 +101,6 @@ namespace TasksApi.Controllers
         }
 
         // DELETE api/<UserControllerr>/5
-        [Authorize]
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
