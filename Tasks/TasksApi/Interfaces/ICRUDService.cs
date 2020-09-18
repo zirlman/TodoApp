@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TasksApi.Interfaces
 {
-    interface ICRUDService
+    public interface ICRUDService
     {
         bool Create(Object obj);
         bool Update(Object obj);
