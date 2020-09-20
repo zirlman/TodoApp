@@ -1,15 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using TasksApi.Service;
 
 namespace TasksApi.Middleware
@@ -24,6 +17,7 @@ namespace TasksApi.Middleware
     {
         public static IServiceCollection AddTokenAuthentication(this IServiceCollection services, IConfiguration config)
         {
+
             var secret = config.GetSection("AppSettings").GetSection("Secret").Value;
             var key = Encoding.UTF8.GetBytes(secret);
             services.AddAuthentication(x =>
@@ -31,16 +25,17 @@ namespace TasksApi.Middleware
                 x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(x =>
+            .AddJwtBearer(options =>
             {
-                x.TokenValidationParameters = new TokenValidationParameters
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = false,
                     ValidateAudience = false,
-                    // ValidIssuer = "localhost",
-                    //ValidAudience = "localhost"
                 };
+
+                options.SecurityTokenValidators.Clear();
+                options.SecurityTokenValidators.Add(new RevokableJwtSecurityTokenHandler(services.BuildServiceProvider()));
             });
 
             return services;
