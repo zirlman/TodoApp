@@ -1,5 +1,5 @@
-# ProinterBackendTestProject
-This repo contains all code necessary to implement the provided task (DB &amp; Backend)
+# TodoApp
+This repo contains all code necessary to implement a simple REST API for To-do's (DB &amp; Backend)
 
 
 
